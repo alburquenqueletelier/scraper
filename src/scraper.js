@@ -3,8 +3,11 @@
  * Launches Puppeteer, scrapes, outputs JSON to stdout, exits.
  * All logs go to stderr so stdout stays clean for JSON parsing.
  */
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { getStoreAdapter } from './stores/index.js';
+
+puppeteer.use(StealthPlugin());
 
 const log = (...args) => console.error('[scraper]', ...args);
 const out = (data) => console.log(JSON.stringify(data));
@@ -135,11 +138,6 @@ async function main() {
     await page.setViewport({ width: 1280, height: 800 });
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'es-CL,es;q=0.9,en;q=0.8' });
 
-    // Disable webdriver flag (basic bot-detection evasion)
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    });
-
     // Block images, fonts and media — keep scripts and stylesheets for SPAs
     await page.setRequestInterception(true);
     const blockedTypes = new Set(['image', 'font', 'media']);
@@ -160,7 +158,23 @@ async function main() {
     // Extra JS-render wait
     await new Promise((r) => setTimeout(r, adapter.pageWaitMs ?? 2000));
 
-    const extracted = await extractProducts(page);
+    let extracted = await extractProducts(page);
+    let finalUrl = searchUrl;
+
+    // Fallback to promoUrl for telco adapters when search returns no structured products
+    const searchCount = extracted.type === 'products' ? (extracted.products?.length ?? 0) : 0;
+    if (searchCount === 0 && adapter.promoUrl) {
+      log(`${adapter.name} | "${product}" → 0 results, fallback to promoUrl`);
+      await page.goto(adapter.promoUrl, { waitUntil: 'domcontentloaded', timeout });
+      if (adapter.waitSelector) {
+        await page
+          .waitForSelector(adapter.waitSelector, { timeout: 12000 })
+          .catch(() => log(`Wait selector not found on promoUrl: ${adapter.waitSelector}`));
+      }
+      await new Promise((r) => setTimeout(r, adapter.pageWaitMs ?? 2000));
+      extracted = await extractProducts(page);
+      finalUrl = adapter.promoUrl;
+    }
 
     const productCount =
       extracted.type === 'products' ? extracted.products?.length ?? 0 : 'text-fallback';
@@ -170,7 +184,7 @@ async function main() {
       storeName: adapter.name,
       storeKey,
       product,
-      searchUrl,
+      searchUrl: finalUrl,
       ...extracted,
     });
   } catch (err) {

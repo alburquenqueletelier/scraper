@@ -5,6 +5,7 @@ import { getStoreByUrl } from './stores/index.js';
 import { askLLM } from './llm.js';
 import { sendTelegram } from './telegram.js';
 import { logError, pruneOldErrors } from './errors.js';
+import { filterAndMark } from './seen.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCRAPER_PATH = join(__dirname, 'scraper.js');
@@ -166,11 +167,16 @@ async function runCycle() {
     }
   }
 
-  // Send Telegram if deals found
+  // Send Telegram if deals found (skip already-seen URLs)
   if (goodDeals.length > 0) {
     try {
-      await sendTelegram(goodDeals);
-      console.log(`[TELEGRAM] Enviado: ${goodDeals.length} grupo(s) de ofertas`);
+      const newDeals = await filterAndMark(goodDeals);
+      if (newDeals.length > 0) {
+        await sendTelegram(newDeals);
+        console.log(`[TELEGRAM] Enviado: ${newDeals.length} grupo(s) de ofertas`);
+      } else {
+        console.log('[RESULT] Ofertas encontradas pero ya notificadas (deduplicadas).');
+      }
     } catch (err) {
       console.error(`[TELEGRAM ERROR] ${err.message}`);
     }
