@@ -1,13 +1,11 @@
-// Entel is a telco — scrapes their promotions/equipo pages instead of a generic search
+// Entel is a telco — no keyword search; catalog is at miportal.entel.cl
 export default {
   name: 'Entel',
   promoMode: true,
-  buildSearchUrl(product) {
-    // Entel equipment search
-    return `https://www.entel.cl/buscador/?q=${encodeURIComponent(product)}`;
+  buildSearchUrl() {
+    return 'https://miportal.entel.cl/personas/catalogo/celulares';
   },
-  // Fallback promo page if search returns nothing useful
-  promoUrl: 'https://www.entel.cl/equipos/',
-  waitSelector: '[class*="product"], [class*="card"], [class*="item"], [class*="equipo"]',
-  pageWaitMs: 4000,
+  promoUrl: 'https://miportal.entel.cl/personas/catalogo/celulares',
+  waitSelector: '[class*="product-col"]',
+  pageWaitMs: 7000,
 };

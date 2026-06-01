@@ -61,6 +61,12 @@ function runScraper(storeKey, productName) {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
+    const puppeteerTimeout = parseInt(process.env.PUPPETEER_TIMEOUT || '30000');
+    const killTimer = setTimeout(() => {
+      proc.kill('SIGKILL');
+      resolve({ error: `Scraper timeout after ${puppeteerTimeout + 15000}ms` });
+    }, puppeteerTimeout + 15000);
+
     let stdout = '';
     let stderr = '';
 
@@ -68,6 +74,7 @@ function runScraper(storeKey, productName) {
     proc.stderr.on('data', (d) => (stderr += d));
 
     proc.on('close', (code) => {
+      clearTimeout(killTimer);
       if (stderr.trim()) {
         process.stderr.write(`  ${stderr.trim()}\n`);
       }
@@ -78,7 +85,10 @@ function runScraper(storeKey, productName) {
       }
     });
 
-    proc.on('error', (err) => resolve({ error: err.message }));
+    proc.on('error', (err) => {
+      clearTimeout(killTimer);
+      resolve({ error: err.message });
+    });
   });
 }
 

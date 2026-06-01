@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "timestamp": "2026-06-01T03:08:17.699Z",
+      "store": "https://www.falabella.com/falabella-cl/",
+      "product": "Laptop Gamer",
+      "error": "LLM: LLM no retornó JSON: {\n  \"hasGoodDeals\": true,\n  \"deals\": [\n    {\n      \"name\": \"Acer Aspire 3 Gamer\",\n      \"price\": \"99.990 CLP\",\n      \"url\": \"https://www.falabella.com/falabella-srv/ES/falabella/Catalog/ProductDetail?ID=1010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "timestamp": "2026-06-01T04:00:01.530Z",
+      "store": "https://www.paris.cl/",
+      "product": "ssd nvme 1tb",
+      "error": "LLM: JSON Parse error: Expected ']'"
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 export default {
   name: 'Ripley',
   buildSearchUrl(product) {
-    return `https://simple.ripley.cl/search?texto=${encodeURIComponent(product)}&sortBy=offer_price_asc`;
+    return `https://simple.ripley.cl/search/${encodeURIComponent(product)}?sort=price_asc&page=1`;
   },
-  waitSelector: '[class*="catalog-product"], [class*="ProductCard"], [class*="product-item"]',
-  pageWaitMs: 3000,
+  waitSelector: '.product-item--wrapper',
+  pageWaitMs: 5000,
 };

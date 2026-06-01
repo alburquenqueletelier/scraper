@@ -23,6 +23,24 @@ const PROVIDERS = {
   },
 };
 
+const _rateWindow = [];
+
+async function rateLimit() {
+  const rpm = parseInt(process.env.LLM_RPM_LIMIT || '6', 10);
+  const now = Date.now();
+  const cutoff = now - 60_000;
+
+  while (_rateWindow.length && _rateWindow[0] < cutoff) _rateWindow.shift();
+
+  if (_rateWindow.length >= rpm) {
+    const waitMs = 60_000 - (now - _rateWindow[0]) + 50;
+    await new Promise(r => setTimeout(r, waitMs));
+    return rateLimit();
+  }
+
+  _rateWindow.push(Date.now());
+}
+
 function formatProducts(scraperResult) {
   if (scraperResult.type === 'products' && scraperResult.products?.length) {
     return scraperResult.products
@@ -60,7 +78,7 @@ ${formatProducts(scraperResult)}
 Instrucciones:
 - Identifica productos que coincidan o sean muy similares a "${product.name}"
 - Evalúa si el precio es bueno según: conocimiento del mercado chileno, descuentos visibles, y el precio máximo
-- Solo marca como "buena oferta" si el precio está genuinamente bajo el valor de mercado O tiene descuento significativo (>15%)
+- Solo marca como "buena oferta" si el precio está genuinamente bajo el valor de mercado 0 tiene descuento significativo (>25%)
 - Si hay precio máximo, solo incluye ofertas en ese rango o menor
 - Si no hay productos relevantes o no hay buenas ofertas, responde con hasGoodDeals: false y deals: []
 
@@ -86,6 +104,7 @@ function parseJsonResponse(text) {
 }
 
 export async function askLLM(scraperResult, product) {
+  await rateLimit();
   const providerName = (process.env.LLM_PROVIDER || 'openrouter').toLowerCase();
   const provider = PROVIDERS[providerName];
 
@@ -108,7 +127,7 @@ export async function askLLM(scraperResult, product) {
       model,
       messages: [{ role: 'user', content: buildPrompt(scraperResult, product) }],
       temperature: 0.1,
-      max_tokens: 1000,
+      max_tokens: 3000,
     }),
   });
 

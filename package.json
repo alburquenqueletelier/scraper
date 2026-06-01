@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "bun src/main.js",
-    "scrape:test": "bun src/scraper.js --store paris --product laptop"
+    "scrape:test": "bun src/scraper.js --store paris --product laptop",
+    "telegram:check": "bun src/check-telegram.js"
   },
   "dependencies": {
     "puppeteer": "^22.0.0",

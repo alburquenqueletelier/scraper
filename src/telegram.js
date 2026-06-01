@@ -65,6 +65,24 @@ async function sendMessage(token, chatId, text) {
   }
 }
 
+export async function verifyTelegram() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) throw new Error('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID');
+
+  const meRes = await fetch(`${API(token)}/getMe`);
+  if (!meRes.ok) {
+    const err = await meRes.text();
+    throw new Error(`Bot token invalid — Telegram ${meRes.status}: ${err.slice(0, 300)}`);
+  }
+  const { result: bot } = await meRes.json();
+
+  await sendMessage(token, chatId, `✅ cyber-scraper bot activo\nBot: @${bot.username}\nchat_id: ${chatId}`);
+
+  return { botUsername: bot.username, chatId };
+}
+
 export async function sendTelegram(dealGroups) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;

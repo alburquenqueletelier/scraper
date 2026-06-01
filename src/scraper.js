@@ -27,6 +27,8 @@ async function extractProducts(page) {
   return page.evaluate(() => {
     const cardSelectors = [
       '[data-testid*="product"]',
+      '.product-item--wrapper',        // Ripley
+      '[class*="product-col"]',         // Entel
       '[class*="product-item"]',
       '[class*="ProductItem"]',
       '[class*="product-card"]',
@@ -37,8 +39,6 @@ async function extractProducts(page) {
       '.pod',
       '[class*="shelf-item"]',
       '[class*="item-card"]',
-      '[class*="equipo"]',
-      '[class*="smartphone"]',
     ];
 
     let cards = [];
@@ -56,7 +56,7 @@ async function extractProducts(page) {
 
     if (cards.length === 0) {
       // fallback: visible text of page, trimmed to avoid huge payloads
-      return { type: 'text', content: document.body.innerText.slice(0, 6000) };
+      return { type: 'text', content: document.body.innerText.slice(0, 10000) };
     }
 
     const products = cards.slice(0, 25).map((card) => {
@@ -66,7 +66,7 @@ async function extractProducts(page) {
       const priceEls = card.querySelectorAll(
         '[class*="price"],[class*="Price"],[class*="monto"],[class*="valor"],[class*="Precio"],[class*="precio"]'
       );
-      const linkEl = card.querySelector('a[href]');
+      const linkEl = card.querySelector('a[href]') ?? card.closest('a');
       const badgeEl = card.querySelector(
         '[class*="discount"],[class*="Discount"],[class*="offer"],[class*="badge"],[class*="promo"],[class*="rebaja"],[class*="Rebaja"],[class*="ahorro"]'
       );
@@ -112,8 +112,22 @@ async function main() {
     process.exit(1);
   }
 
-  const searchUrl = adapter.buildSearchUrl(product);
+  const searchUrl = adapter.buildSearchUrl ? adapter.buildSearchUrl(product) : 'api';
   log(`${adapter.name} | "${product}" → ${searchUrl}`);
+
+  // API-based adapters skip Puppeteer entirely
+  if (typeof adapter.fetchProducts === 'function') {
+    try {
+      const extracted = await adapter.fetchProducts(product);
+      const count = extracted.type === 'products' ? extracted.products?.length ?? 0 : 'text-fallback';
+      log(`${adapter.name} | "${product}" → fetched ${count} items via API`);
+      out({ storeName: adapter.name, storeKey, product, searchUrl, ...extracted });
+    } catch (err) {
+      log(`API Error: ${err.message}`);
+      out({ error: err.message, storeName: adapter.name, storeKey, product, searchUrl });
+    }
+    return;
+  }
 
   const timeout = parseInt(process.env.PUPPETEER_TIMEOUT || '30000');
   let browser;
