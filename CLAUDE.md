@@ -17,7 +17,7 @@ cat data/errors.json                               # last-hour errors
 main.js          → loop + concurrency pool (runWithPool)
 scraper.js       → child process per (store, product): puppeteer → JSON stdout → exit
 stores/{key}.js  → adapter: buildSearchUrl(), waitSelector, pageWaitMs
-llm.js           → provider-agnostic chat completions (openrouter/openai/cloudflare)
+llm.js           → provider-agnostic chat completions (openrouter/openai/cloudflare/claudecode)
 telegram.js      → Bot API notifications + verifyTelegram() health check
 errors.js        → rolling 1h log → data/errors.json
 ```

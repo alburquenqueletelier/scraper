@@ -1,3 +1,5 @@
+import { spawnSync } from 'child_process';
+
 const PROVIDERS = {
   openrouter: {
     baseUrl: 'https://openrouter.ai/api/v1',
@@ -103,9 +105,37 @@ function parseJsonResponse(text) {
   return JSON.parse(match[0]);
 }
 
+function askClaudeCode(prompt, model = 'haiku') {
+  const result = spawnSync(
+    'claude',
+    ['-p', prompt, '--model', model, '--output-format', 'json'],
+    { encoding: 'utf8', timeout: 60000 }
+  );
+
+  if (result.error) throw new Error(`claude spawn error: ${result.error.message}`);
+  if (result.status !== 0) throw new Error(`claude exit ${result.status}: ${result.stderr?.slice(0, 300)}`);
+
+  const parsed = JSON.parse(result.stdout.trim());
+
+  if (parsed.structured_output && typeof parsed.structured_output === 'object') {
+    return parsed.structured_output;
+  }
+
+  const resultStr = parsed.result;
+  if (!resultStr) throw new Error('claude retornó resultado vacío');
+  return parseJsonResponse(resultStr);
+}
+
 export async function askLLM(scraperResult, product) {
-  await rateLimit();
   const providerName = (process.env.LLM_PROVIDER || 'openrouter').toLowerCase();
+
+  if (providerName === 'claudecode') {
+    const model = process.env.CLAUDECODE_MODEL || 'haiku';
+    const prompt = buildPrompt(scraperResult, product);
+    return askClaudeCode(prompt, model);
+  }
+
+  await rateLimit();
   const provider = PROVIDERS[providerName];
 
   if (!provider) throw new Error(`Proveedor LLM desconocido: ${providerName}`);

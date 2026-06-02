@@ -34,6 +34,10 @@ Scraper que monitorea tiendas chilenas, evalúa precios con un LLM y notifica po
 # Bun instalado
 curl -fsSL https://bun.sh/install | bash
 
+# Claude Code CLI (requerido si usas LLM_PROVIDER=claudecode)
+npm install -g @anthropic-ai/claude-code
+# Luego autenticarse: claude login
+
 # Dependencias del sistema para Chromium headless (Linux)
 sudo apt-get install -y libatk-bridge2.0-0 libdrm2 libxkbcommon0 \
   libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
@@ -71,6 +75,10 @@ TELEGRAM_CHAT_ID=tu_chat_id
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-or-v1-...
 OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free
+
+# Alternativa sin API key: Claude Code CLI local
+# LLM_PROVIDER=claudecode
+# CLAUDECODE_MODEL=haiku   # alias: haiku | sonnet | opus
 ```
 
 #### Obtener credenciales Telegram
@@ -186,7 +194,8 @@ cat data/errors.json
 | `PRODUCTS` | ✅ | — | `Nombre:Precio` separados por coma |
 | `TELEGRAM_BOT_TOKEN` | ✅ | — | Token del bot de Telegram |
 | `TELEGRAM_CHAT_ID` | ✅ | — | ID del chat donde llegan las alertas |
-| `LLM_PROVIDER` | ✅ | `openrouter` | `openrouter` / `openai` / `cloudflare` |
+| `LLM_PROVIDER` | ✅ | `openrouter` | `openrouter` / `openai` / `cloudflare` / `claudecode` |
+| `CLAUDECODE_MODEL` | ❌ | `haiku` | Alias (`haiku`/`sonnet`/`opus`) o model ID completo. Solo si `LLM_PROVIDER=claudecode` |
 | `OPENROUTER_API_KEY` | ✅* | — | *si LLM_PROVIDER=openrouter |
 | `OPENROUTER_MODEL` | ❌ | `meta-llama/llama-3.3-70b-instruct:free` | Modelo de OpenRouter |
 | `OPENAI_API_KEY` | ✅* | — | *si LLM_PROVIDER=openai |

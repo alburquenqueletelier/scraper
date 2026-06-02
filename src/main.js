@@ -47,7 +47,8 @@ function validateConfig(stores, products) {
 
   const provider = (process.env.LLM_PROVIDER || 'openrouter').toLowerCase();
   const keyMap = { openrouter: 'OPENROUTER_API_KEY', openai: 'OPENAI_API_KEY', cloudflare: 'CF_API_TOKEN' };
-  if (!process.env[keyMap[provider]]) errors.push(`${keyMap[provider]} not set for provider "${provider}"`);
+  const requiredKey = keyMap[provider];
+  if (requiredKey && !process.env[requiredKey]) errors.push(`${requiredKey} not set for provider "${provider}"`);
 
   return errors;
 }
